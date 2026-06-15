@@ -1,0 +1,11 @@
+# Pinned-ish runtime deps for deploying the Streamlit demo (e.g. HF Spaces / Streamlit Cloud).
+# For local dev, prefer: pip install -e ".[app,agent]"
+numpy>=1.26
+scipy>=1.11
+pandas>=2.1
+pydantic>=2.5
+scikit-learn>=1.4
+matplotlib>=3.8
+streamlit>=1.30
+plotly>=5.18
+anthropic>=0.40
