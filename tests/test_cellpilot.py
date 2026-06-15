@@ -15,6 +15,7 @@ from cellpilot.schema import CultureRun, Variable
 
 
 
+
 def test_simulate_returns_all_observables():
     traj = simulate(InitialState(), t_end=120)
     for var in (Variable.VCD, Variable.GLUCOSE, Variable.LACTATE, Variable.VIABILITY):
