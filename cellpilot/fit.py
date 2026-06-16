@@ -13,7 +13,7 @@ from scipy.optimize import least_squares
 from cellpilot.model import InitialState, ModelParams, simulate
 from cellpilot.schema import CultureRun, Variable
 
-# Variables we fit against and a rough scale to normalize their residuals.
+
 _FIT_VARS: dict[Variable, float] = {
     Variable.VCD: 10.0,
     Variable.GLUCOSE: 25.0,
@@ -22,7 +22,7 @@ _FIT_VARS: dict[Variable, float] = {
     Variable.AMMONIA: 10.0,
 }
 
-# Free parameters (name, lower, upper, default-from-ModelParams attr).
+
 _PARAMS = [
     ("mu_max", 0.01, 0.08),
     ("Y_x_glc", 1.0, 5.0),
