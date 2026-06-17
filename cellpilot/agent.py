@@ -1,7 +1,4 @@
-"""Agentic interpretation layer — a Claude tool-calling research assistant.
 
-
-"""
 
 from __future__ import annotations
 
@@ -45,12 +42,17 @@ TOOL_SPECS = [
         "description": "Recommend a feed schedule maximizing integral viable cell density under lactate/ammonia limits; reports projected improvement vs no-feed baseline.",
         "input_schema": {"type": "object", "properties": {}},
     },
+    {
+        "name": "propose_next_experiment",
+        "description": "Active learning: propose the next experiment (initial glucose/glutamine + feed design) to run to find the best process fastest, via Bayesian optimization over the calibrated virtual cell model.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
 ]
 
 
 def _dispatch(name: str, args: dict, run: CultureRun, fit_cache: dict) -> dict:
     """Route a tool call to the corresponding pure function, caching the model fit."""
-    if "fit" not in fit_cache and name in {"predict_trajectory", "recommend_feed"}:
+    if "fit" not in fit_cache and name in {"predict_trajectory", "recommend_feed", "propose_next_experiment"}:
         fit_cache["fit"] = tools.calibrate(run)
     fit = fit_cache.get("fit")
 
@@ -62,6 +64,8 @@ def _dispatch(name: str, args: dict, run: CultureRun, fit_cache: dict) -> dict:
         return tools.predict_trajectory(run, extend_h=float(args.get("extend_h", 0.0)), fit=fit)
     if name == "recommend_feed":
         return tools.recommend_feed(run, fit=fit)
+    if name == "propose_next_experiment":
+        return tools.propose_next_experiment(run, fit=fit)
     raise ValueError(f"unknown tool: {name}")
 
 

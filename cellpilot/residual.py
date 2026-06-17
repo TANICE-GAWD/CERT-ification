@@ -19,7 +19,7 @@ _STATE_VARS = [Variable.VCD, Variable.GLUCOSE, Variable.GLUTAMINE, Variable.LACT
 def _mech_states(fit: FitResult, times: np.ndarray) -> dict[Variable, np.ndarray]:
     """Mechanistic state predictions interpolated onto ``times``."""
     t_end = float(times.max()) if times.size else 240.0
-    mech = simulate(fit.initial, t_end=t_end, params=fit.params)
+    mech = simulate(fit.initial, t_end=t_end, params=fit.params, feeds=fit.feeds)
     grid = mech.index.to_numpy()
     return {v: np.interp(times, grid, mech[v.value].to_numpy()) for v in _STATE_VARS}
 
@@ -43,7 +43,7 @@ def _hybrid_features(fit: FitResult, times: np.ndarray) -> np.ndarray:
 
 
 def _pure_ml_features(run: CultureRun, fit: FitResult, times: np.ndarray) -> np.ndarray:
-    """Features with NO mechanism: inoculation state + time only."""
+    
     init = fit.initial
     t_norm = times / (times.max() if times.size and times.max() > 0 else 1.0)
     n = times.size
@@ -67,7 +67,7 @@ def _new_gbm() -> GradientBoostingRegressor:
 
 @dataclass
 class HybridModel:
-    """Mechanistic + ML-residual model for VCD."""
+    
 
     residual_gbm: GradientBoostingRegressor
 
@@ -124,9 +124,12 @@ class CVResult:
     n_folds: int
 
 
-def cross_validate(runs: list[CultureRun], n_folds: int = 4) -> CVResult:
-    """Leave-folds-out CV comparing mechanistic vs pure-ML vs hybrid on held-out VCD."""
-    fits = [fit_run(r) for r in runs]
+def cross_validate(
+    runs: list[CultureRun], n_folds: int = 4, feeds_list: list | None = None
+) -> CVResult:
+
+    feeds_list = feeds_list or [[] for _ in runs]
+    fits = [fit_run(r, feeds=f) for r, f in zip(runs, feeds_list)]
     idx = np.arange(len(runs))
     folds = np.array_split(idx, n_folds)
 

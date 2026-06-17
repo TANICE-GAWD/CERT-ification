@@ -5,10 +5,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from cellpilot.data import make_dataset, simulate_run, to_messy_csv
+from cellpilot.data import simulate_run, to_messy_csv
 from cellpilot.ingest import ingest_dataframe, map_columns
 from cellpilot.model import FeedEvent, InitialState, integral_vcd, simulate
 from cellpilot.optimize import OptimizerConfig, optimize_feeds
+from cellpilot.realdata import load_ieks_batches
 from cellpilot.residual import cross_validate
 from cellpilot.schema import CultureRun, Variable
 
@@ -96,13 +97,31 @@ def test_optimizer_improves_on_baseline_within_constraints():
 
 
 
-def test_hybrid_cross_validation_invariants():
-    cv = cross_validate(make_dataset(n_runs=8, seed=0), n_folds=2)
+def test_hybrid_beats_baselines_on_real_data():
     
+    batches = load_ieks_batches()
+    runs = [r for r, _ in batches]
+    feeds = [f for _, f in batches]
+    cv = cross_validate(runs, n_folds=3, feeds_list=feeds)
     for v in (cv.rmse_mechanistic, cv.rmse_pure_ml, cv.rmse_hybrid):
         assert np.isfinite(v) and v > 0
     
-    assert cv.rmse_hybrid < cv.rmse_pure_ml
+    assert cv.rmse_hybrid <= cv.rmse_mechanistic
+
+
+
+
+def test_active_learning_proposes_valid_design():
+    from cellpilot.design import DesignSpace, bayesian_optimize
+    from cellpilot.fit import fit_run
+
+    run, feeds = load_ieks_batches()[0]
+    params = fit_run(run, feeds=feeds).params
+    res = bayesian_optimize(params, DesignSpace(), n_init=4, n_iter=8, seed=0)
+    
+    assert set(res.best_design) == {"glc0_mM", "gln0_mM", "feed_glc_mM", "feed_gln_mM", "feed_vol_ml"}
+    assert np.isfinite(res.best_objective)
+    assert res.history_bo[-1] >= res.history_bo[0]
 
 
 

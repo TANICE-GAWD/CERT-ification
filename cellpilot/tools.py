@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from cellpilot.design import DesignSpace, bayesian_optimize
 from cellpilot.fit import FitResult, fit_run
 from cellpilot.model import FeedEvent, ModelParams, integral_vcd, simulate
 from cellpilot.optimize import OptimizerConfig, optimize_feeds
@@ -69,7 +70,7 @@ def predict_trajectory(run: CultureRun, extend_h: float = 0.0, fit: FitResult | 
     
     fit = fit or calibrate(run)
     t_end = (run.times().max() if run.times().size else 240.0) + extend_h
-    traj = simulate(fit.initial, t_end=float(t_end), params=fit.params)
+    traj = simulate(fit.initial, t_end=float(t_end), params=fit.params, feeds=fit.feeds)
     return {
         "fit_rmse": fit.rmse,
         "predicted_peak_vcd": float(traj[Variable.VCD.value].max()),
@@ -100,4 +101,16 @@ def recommend_feed(run: CultureRun, fit: FitResult | None = None, seed: int = 0)
         "projected_improvement_pct": round(improvement, 1),
         "projected_peak_lactate_mM": round(best.peak_lactate, 1),
         "projected_peak_ammonia_mM": round(best.peak_ammonia, 1),
+    }
+
+
+def propose_next_experiment(run: CultureRun, fit: FitResult | None = None, n_iter: int = 12, seed: int = 0) -> dict:
+
+    fit = fit or calibrate(run)
+    res = bayesian_optimize(fit.params, DesignSpace(), n_iter=n_iter, seed=seed)
+    return {
+        "proposed_design": res.best_design,
+        "predicted_ivcd": round(res.best_objective, 1),
+        "experiments_simulated": len(res.history_bo),
+        "note": "Design proposed by Bayesian optimization over the calibrated virtual cell model.",
     }

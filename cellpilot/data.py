@@ -1,7 +1,3 @@
-"""Synthetic fed-batch run generator.
-
-
-"""
 
 from __future__ import annotations
 
@@ -58,15 +54,14 @@ def simulate_run(
     t_end: float = 240.0,
     sample_every_h: float = 24.0,
     params: ModelParams | None = None,
+    add_feeds: bool = True,
 ) -> tuple[CultureRun, pd.DataFrame]:
-    """Generate one noisy, sparsely-sampled synthetic run.
 
-    Returns the observed :class:`CultureRun` (what an instrument would log) and the
-    dense ground-truth trajectory (for plotting / evaluation).
-    """
     rng = np.random.default_rng(seed)
     initial = _sample_initial(rng)
-    feeds = _sample_feeds(rng)
+    
+    
+    feeds = _sample_feeds(rng) if add_feeds else []
     
     
     truth_params = replace(
@@ -100,13 +95,12 @@ def simulate_run(
 
 
 def make_dataset(n_runs: int = 12, seed: int = 0, **kwargs) -> list[CultureRun]:
-    """Generate a small dataset of synthetic runs for training/eval/demo."""
+    
     return [simulate_run(f"{i:03d}", seed=seed + i, **kwargs)[0] for i in range(n_runs)]
 
 
 def to_messy_csv(run: CultureRun) -> pd.DataFrame:
-    """Render a run as a wide CSV with deliberately messy, instrument-style headers,
-    to exercise the ingestion column-mapper."""
+
     wide = run.pivot()
     rename = {
         Variable.VCD.value: "Viable Cell Density (10^6 cells/mL)",
