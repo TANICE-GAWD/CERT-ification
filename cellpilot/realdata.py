@@ -8,7 +8,10 @@ import pandas as pd
 from cellpilot.model import FeedEvent
 from cellpilot.schema import CultureRun, Measurement, Variable
 
-DEFAULT_DIR = Path("data/ieks_9batches")
+
+
+
+DEFAULT_DIR = Path(__file__).resolve().parent.parent / "data" / "ieks_9batches"
 
 _COL_TO_VAR = {
     "VCD (10^9 cells/L)": (Variable.VCD, 1.0),
