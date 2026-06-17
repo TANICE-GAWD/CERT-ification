@@ -58,7 +58,13 @@ def _get_run():
         st.header("Run")
         source = st.radio("Source", ["Real fed-batch (IEKS)", "Synthetic", "Upload CSV"])
         if source == "Real fed-batch (IEKS)":
-            batches = _real_batches()
+            try:
+                batches = _real_batches()
+            except FileNotFoundError:
+                st.warning("Real dataset not found in this deployment — falling back to a "
+                           "synthetic run. (Commit `data/ieks_9batches/` to enable it.)")
+                run = ingest_dataframe(to_messy_csv(simulate_run("S7", seed=7)[0]), run_id="SYNTH-7")
+                return run, [], False
             i = st.selectbox("Batch", range(len(batches)), format_func=lambda i: batches[i][0].run_id)
             run, feeds = batches[i]
             return run, feeds, True
@@ -150,7 +156,11 @@ def _real_cv():
 with tab_val:
     st.caption("Leave-one-out CV on 9 real, third-party fed-batch runs — a cross-model test "
                "(different group, different model). Lower is better.")
-    cv = _real_cv()
+    try:
+        cv = _real_cv()
+    except FileNotFoundError:
+        st.warning("Real dataset not found in this deployment. Commit `data/ieks_9batches/` to enable validation.")
+        st.stop()
     fig = go.Figure(go.Bar(
         x=["Mechanistic", "Pure ML", "Hybrid"], y=[cv["mech"], cv["ml"], cv["hybrid"]],
         marker_color=[BLUE, AMBER, GREEN], text=[f"{v:.2f}" for v in (cv["mech"], cv["ml"], cv["hybrid"])],
