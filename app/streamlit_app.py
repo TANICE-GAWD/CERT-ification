@@ -12,6 +12,12 @@ If ANTHROPIC_API_KEY + the 'agent' extra are present, the agent narrates it.
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
+
+# Make the repo-root `cellpilot` package importable when the platform only puts the
+# app's own folder on sys.path (e.g. Streamlit Community Cloud running app/streamlit_app.py).
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd
 import plotly.graph_objects as go
