@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import os
 
 from cellpilot import tools
 from cellpilot.schema import CultureRun
 
-MODEL = "claude-opus-4-8"
+
+MODEL = os.getenv("ANTHROPIC_MODEL", "claude-opus-4-8")
 
 SYSTEM_PROMPT = (
     "You are CellPilot, a cell-culture process assistant for bioprocess scientists. "
@@ -84,10 +86,15 @@ def analyze_run(run: CultureRun, question: str | None = None, model: str = MODEL
     """Run the agent loop over a culture run and return its final narrative answer."""
     try:
         import anthropic
-    except ImportError as e:  
-        raise RuntimeError("install the 'agent' extra (anthropic) and set ANTHROPIC_API_KEY") from e
+    except ImportError as e:
+        raise RuntimeError("install the 'agent' extra (anthropic) and set AI_GATEWAY_API_KEY or ANTHROPIC_API_KEY") from e
 
-    client = anthropic.Anthropic()
+    
+    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
+    if gateway_key:
+        client = anthropic.Anthropic(api_key=gateway_key, base_url="https://ai-gateway.vercel.sh")
+    else:
+        client = anthropic.Anthropic()
     user_msg = question or (
         f"Analyze run '{run.run_id}'. Diagnose any problems and recommend a feed "
         "strategy to maximize viable cell density. Explain your reasoning."

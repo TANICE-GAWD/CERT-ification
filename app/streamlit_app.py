@@ -1,13 +1,4 @@
-"""CellPilot control panel — scientist-facing demo UI.
 
-    pip install -e ".[app]"
-    streamlit run app/streamlit_app.py
-
-A dense, instrument-style dashboard: pick a run (synthetic, a real fed-batch batch, or
-an upload), see the calibrated virtual-cell model over the observed data, the diagnosis,
-the recommended feed, the real-data model validation, and the active-learning proposal.
-If ANTHROPIC_API_KEY + the 'agent' extra are present, the agent narrates it.
-"""
 
 from __future__ import annotations
 
@@ -15,9 +6,15 @@ import os
 import sys
 from pathlib import Path
 
-# Make the repo-root `cellpilot` package importable when the platform only puts the
-# app's own folder on sys.path (e.g. Streamlit Community Cloud running app/streamlit_app.py).
+
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+_HAS_KEY = bool(os.getenv("AI_GATEWAY_API_KEY") or os.getenv("ANTHROPIC_API_KEY"))
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -34,7 +31,7 @@ from cellpilot.realdata import load_ieks_batches
 from cellpilot.residual import cross_validate
 from cellpilot.schema import Variable
 
-st.set_page_config(page_title="CellPilot", page_icon="🛰️", layout="wide")
+st.set_page_config(page_title="CellPilot", layout="wide")
 TEMPLATE = "plotly_dark"
 GREEN, BLUE, AMBER = "seagreen", "cornflowerblue", "orange"
 
@@ -46,7 +43,7 @@ st.markdown(
 )
 
 
-# --------------------------------------------------------------------------- data
+
 @st.cache_data(show_spinner=False)
 def _real_batches():
     return [(r, f) for r, f in load_ieks_batches()]
@@ -109,9 +106,9 @@ fit = fit_run(run, feeds=feeds)
 summary = tools.query_run(run)
 diag = tools.diagnose_state(run)
 
-tab_run, tab_val, tab_design = st.tabs(["🔬 Run analysis", "📊 Model validation", "🧪 Active learning"])
+tab_run, tab_val, tab_design = st.tabs(["Run analysis", "Model validation", "Active learning"])
 
-# --------------------------------------------------------------------------- run tab
+
 with tab_run:
     rec = tools.recommend_feed(run, fit=fit)
     c1, c2, c3, c4 = st.columns(4)
@@ -138,14 +135,14 @@ with tab_run:
         st.caption(f"Projected peak lactate {rec['projected_peak_lactate_mM']} mM · "
                    f"ammonia {rec['projected_peak_ammonia_mM']} mM (within limits).")
 
-    if st.button("🤖 Ask the agent to explain", disabled=not os.getenv("ANTHROPIC_API_KEY")):
+    if st.button("🤖 Ask the agent to explain", disabled=not _HAS_KEY):
         from cellpilot.agent import analyze_run
         with st.spinner("CellPilot agent analyzing…"):
             st.markdown(analyze_run(run))
-    elif not os.getenv("ANTHROPIC_API_KEY"):
-        st.caption("Set ANTHROPIC_API_KEY and install the 'agent' extra for LLM narration.")
+    elif not _HAS_KEY:
+        st.caption("Set AI_GATEWAY_API_KEY (or ANTHROPIC_API_KEY) and install the 'agent' extra for LLM narration.")
 
-# --------------------------------------------------------------------------- validation tab
+
 @st.cache_data(show_spinner=True)
 def _real_cv():
     batches = load_ieks_batches()
@@ -171,7 +168,7 @@ with tab_val:
     best = min(cv["mech"], cv["ml"])
     st.metric("Hybrid improvement vs next-best", f"{(1 - cv['hybrid']/best)*100:.0f}%")
 
-# --------------------------------------------------------------------------- design tab
+
 @st.cache_data(show_spinner=True)
 def _bo(source_id: str, _params):
     return bayesian_optimize(_params, DesignSpace(), n_init=4, n_iter=16, seed=0)

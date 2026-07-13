@@ -1,0 +1,32 @@
+{
+    "VCD": {
+        "unit": "\\mathrm{10^9 \\ cells/L}",
+        "specific_rate_unit": "\\mathrm{1/day}",
+        "abbreviation": "X_\\mathrm{v}"
+    },
+    "Glucose": {
+        "unit": "\\mathrm{mM}",
+        "specific_rate_unit": "\\mathrm{mmol/10^9 \\ cells/day}",
+        "abbreviation": "\\mathrm{Glc}"
+    },
+    "Lactate": {
+        "unit": "\\mathrm{mM}",
+        "specific_rate_unit": "\\mathrm{mmol/10^9 \\ cells/day}",
+        "abbreviation": "\\mathrm{Lac}"
+    },
+    "Glutamine": {
+        "unit": "\\mathrm{mM}",
+        "specific_rate_unit": "\\mathrm{mmol/10^9 \\ cells/day}",
+        "abbreviation": "\\mathrm{Gln}"
+    },
+    "Ammonium": {
+        "unit": "\\mathrm{mM}",
+        "specific_rate_unit": "\\mathrm{mmol/10^9 \\ cells/day}",
+        "abbreviation": "\\mathrm{Amm}"
+    },
+    "Product": {
+        "unit": "\\mathrm{mg/L}",
+        "specific_rate_unit": "\\mathrm{mg/10^9 \\ cells/day}",
+        "abbreviation": "P"
+    }
+}
