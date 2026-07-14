@@ -133,4 +133,13 @@ def test_culturerun_pivot_and_series():
     assert Variable.VCD.value in wide.columns
     t, y = run.series(Variable.GLUCOSE)
     assert t.size == y.size > 0
-    assert np.all(np.diff(t) >= 0)  
+    assert np.all(np.diff(t) >= 0)
+
+
+def test_agent_cache_hit_skips_api(tmp_path):
+    # A pre-seeded cache file must be returned verbatim without importing/calling anthropic.
+    from cellpilot.agent import analyze_run_cached
+    run, _ = simulate_run("t", seed=1)
+    (tmp_path / f"{run.run_id}.md").write_text("CACHED ANSWER")
+    answer, cached = analyze_run_cached(run, tmp_path)
+    assert cached and answer == "CACHED ANSWER"  

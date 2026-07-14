@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 
 from cellpilot import tools
 from cellpilot.schema import CultureRun
@@ -124,3 +125,19 @@ def analyze_run(run: CultureRun, question: str | None = None, model: str = MODEL
         messages.append({"role": "user", "content": results})
 
     return "Reached max turns without a final answer."
+
+
+def analyze_run_cached(run: CultureRun, cache_dir: str | Path, **kwargs) -> tuple[str, bool]:
+    """analyze_run memoized to disk by run_id. Returns (answer, was_cached).
+
+    The run_id (e.g. SYNTH-7, IEKS-01) is the key, so each seed/dataset/run calls the API
+    once. ponytail: uploads all share run_id "upload" — delete the file to refresh those.
+    """
+    cache_dir = Path(cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    f = cache_dir / f"{run.run_id}.md"
+    if f.exists():
+        return f.read_text(), True
+    answer = analyze_run(run, **kwargs)
+    f.write_text(answer)
+    return answer, False

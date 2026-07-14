@@ -135,11 +135,19 @@ with tab_run:
         st.caption(f"Projected peak lactate {rec['projected_peak_lactate_mM']} mM · "
                    f"ammonia {rec['projected_peak_ammonia_mM']} mM (within limits).")
 
-    if st.button("🤖 Ask the agent to explain", disabled=not _HAS_KEY):
-        from cellpilot.agent import analyze_run
-        with st.spinner("CellPilot agent analyzing…"):
-            st.markdown(analyze_run(run))
-    elif not _HAS_KEY:
+    cache_dir = Path(__file__).resolve().parent.parent / ".agent_cache"
+    has_cache = (cache_dir / f"{run.run_id}.md").exists()
+    if st.button("🤖 Ask the agent to explain", disabled=not (_HAS_KEY or has_cache)):
+        from cellpilot.agent import analyze_run_cached
+        if has_cache:
+            answer, cached = analyze_run_cached(run, cache_dir)
+        else:
+            with st.spinner("CellPilot agent analyzing…"):
+                answer, cached = analyze_run_cached(run, cache_dir)
+        st.markdown(answer)
+        if cached:
+            st.caption(f"↺ cached response for {run.run_id} · delete .agent_cache/ to refresh")
+    elif not (_HAS_KEY or has_cache):
         st.caption("Set AI_GATEWAY_API_KEY (or ANTHROPIC_API_KEY) and install the 'agent' extra for LLM narration.")
 
 

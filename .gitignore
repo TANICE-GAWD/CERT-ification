@@ -20,3 +20,6 @@ env/
 # Secrets / local
 .env
 *.local
+
+# Cached agent narratives (commit specific ones to pre-warm the deployed demo)
+.agent_cache/
